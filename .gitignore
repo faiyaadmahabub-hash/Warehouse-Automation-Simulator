@@ -1,0 +1,12 @@
+target/
+.idea/
+*.iml
+.DS_Store
+*.class
+*.log
+.vscode/
+.settings/
+.classpath
+.project
+nb-configuration.xml
+nbactions.xml
