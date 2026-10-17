@@ -1,0 +1,50 @@
+SwiftCart | Windows | JDK 23.0.2, --release 8 | 2026-10-17
+Compile: javac --release 8 -encoding UTF-8 -d <temp> src/main/java/*.java
+Compiled 19 source files successfully.
+Run: java -cp <temp> SwiftCartMain (45-second observation window)
+Stopped after 45 seconds. Partial run; normal five-minute shutdown not tested.
+
+Actual event excerpts (first matching lines, original order within each stage):
+
+OrderIntake:
+OrderIntake: Starting (Thread: OrderThread-1)
+OrderIntake: Order #1 accepted (Thread: OrderThread-1)
+OrderIntake: Order #2 accepted (Thread: OrderThread-1)
+
+Picker-
+Picker-1: Starting (Thread: Picker-1)
+Picker-4: Starting (Thread: Picker-4)
+Picker-2: Starting (Thread: Picker-2)
+
+Packer:
+Packer: Starting (Thread: Packer-1)
+Packer: Order #1 packed (Thread: Packer-1)
+Packer: Order #2 packed (Thread: Packer-1)
+
+Labeller:
+Labeller: Starting (Thread: Labeller-1)
+Labeller: Order #1 labelled with A001 (Thread: Labeller-1)
+Labeller: Order #2 labelled with A002 (Thread: Labeller-1)
+
+Sorter:
+Sorter: Starting (Thread: Sorter-1)
+Sorter: Box from Order #1 sorted to ZONE-2 (1/6 boxes in zone batch) (Thread: Sorter-1)
+Sorter: Box from Order #2 sorted to ZONE-1 (1/6 boxes in zone batch) (Thread: Sorter-1)
+
+Truck
+Truck-1: Broken down (Thread: Truck-1)
+Truck-1: Created Truck-2 (Total: 2 trucks active) (Thread: TruckDispatcher-1)
+Truck-1: Created Truck-3 (Total: 3 trucks active) (Thread: TruckDispatcher-1)
+
+AGVFailure
+AGVFailureSimulator: Starting (Thread: AGVFailureSimulator-1)
+AGVFailureSimulator: AGV-3 breakdown simulated (Thread: AGVFailureSimulator-1)
+AGVFailureSimulator: AGV-3 repaired (Thread: AGVRepair-3)
+
+Observed event counts (log lines, not unique-order correctness assertions):
+Intake accepted: 74
+Packed: 0
+Sorted: 51
+Containers created: 1
+Truck dispatch lines: 0
+Smoke scope: compilation and active pipeline stages observed; no full-run totals claimed.

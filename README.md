@@ -1,167 +1,60 @@
-# SwiftCart E-commerce Centre - Concurrent Programming Simulation
+﻿# SwiftCart Warehouse Automation Simulator
 
-**Author:** Faiyad Mahabub (TP077983)  
-**Course:** CT074-3-2-CCP - Concurrent Programming  
-**Lecturer:** DR. KUAN YIK JUNN
+A Java concurrency coursework project that models an e-commerce warehouse: synthetic orders move through picking, packing, labelling, sorting, AGV loading and truck transport. Its value is the coordination of multiple worker threads and limited shared resources, rather than integration with a real warehouse.
 
-## Overview
+The original project credits **Faiyad Mahabub** for the Concurrent Programming module. The [preserved project guide](docs/PROJECT_GUIDE.md) retains the original coursework context and component overview.
 
-SwiftCart E-commerce Centre is a multi-threaded Java application that demonstrates advanced concurrent programming concepts through modeling a fully automated warehouse fulfillment system. The simulation processes 600 orders at 500-millisecond intervals through six interconnected stages using a producer-consumer pipeline architecture.
+**Status:** all Java sources compile with the Java 8 language/API target. A real 45-second partial run demonstrated active pipeline stages using the unchanged default configuration. The five-minute completion path and final aggregate report were not verified in this run.
 
-## System Architecture
+![Captured simulation activity](docs/assets/smoke-run.png)
 
-### Processing Pipeline
+*Rendering of excerpts captured from a real local simulation on 17 October 2026, not a native terminal screenshot. Inputs, delays, failures and quality outcomes are synthetic and randomized. [Captured transcript](docs/assets/smoke-transcript.txt).*
 
-The system implements a producer-consumer pipeline with the following stages:
+## Pipeline and concurrency
 
-1. **Order Intake** - Receives and validates incoming orders
-2. **Picking Station** - Retrieves items from warehouse inventory (4 concurrent pickers)
-3. **Packing Station** - Packages orders into boxes
-4. **Labelling Station** - Assigns destinations and tracking IDs
-5. **Sorting Area** - Routes packages to appropriate containers
-6. **Loading Bay & Transport** - Loads containers onto trucks (2 loading bays, 3 AGVs)
+```mermaid
+flowchart LR
+    Intake[Order intake] --> Pick[Four picking workers]
+    Pick --> Pack[Packing]
+    Pack --> Label[Labelling]
+    Label --> Sort[Sort by destination and batch]
+    Sort --> Containers[Containers: five batches of six boxes]
+    Containers --> AGV[Three AGV loaders]
+    AGV --> Bay[Two loading bays]
+    Bay --> Truck[Truck dispatch and trips]
+    Faults[Random AGV faults and recovery] --> AGV
+```
 
-### Key Concurrency Features
+`BlockingQueue` transfers work between stages. Semaphores constrain AGVs, loading bays and containers at the bay; atomic counters record shared activity. Dedicated rejection, fault simulation and shutdown threads support the processing workers.
 
-- **Thread-Safe Data Transfer:** BlockingQueue implementation for safe inter-stage communication
-- **Resource Management:** Semaphore-based control for limited resources (pickers, AGVs, loading bays)
-- **Race Condition Prevention:** Atomic operations for shared counters and statistics
-- **Deadlock Avoidance:** Timeout-based resource acquisition
-- **Equipment Failure Simulation:** Probabilistic breakdown and recovery modeling
-- **Comprehensive Statistics:** Thread-safe performance tracking across all operations
+Defaults in `Constants.java` are 600 generated orders, a 500 ms intake interval, four pickers, three AGVs, two bays, six-box batches and 30-box containers. Quality rejection probability is 10% at relevant checks, and AGV fault probability is 5% at its periodic checks. These are simulation parameters, not measured warehouse reliability.
 
-## Technical Implementation
+## Build and run
 
-### Core Concurrency Concepts
+Requires a JDK with `javac` and `java` on PATH; no external Java dependencies. Verification used JDK 23.0.2 with `--release 8`. From the repository root in PowerShell:
 
-#### 1. Producer-Consumer Pattern
-- BlockingQueue for thread-safe order passing between stages
-- Decoupled timing between order generation and processing
+```powershell
+New-Item -ItemType Directory -Force target/classes | Out-Null
+javac --release 8 -encoding UTF-8 -d target/classes (Get-ChildItem src/main/java/*.java).FullName
+java -cp target/classes SwiftCartMain
+```
 
-#### 2. Worker Thread Pool
-- Multiple concurrent pickers (4 threads) for parallel processing
-- Timeout-based polling for graceful shutdown
+The default simulation runs for at least five minutes plus intake completion and pipeline drain/shutdown. Intake verification adds work beyond the nominal 500 ms sleep, so 600 orders need not finish in exactly five minutes. Console messages expose worker activity; there is no graphical UI or persistent warehouse database.
 
-#### 3. Resource Constraints
-- **Bounded Capacity:** Limited queue sizes and container capacities
-- **Semaphore Limits:** 4 concurrent pickers, 3 AGVs, 2 loading bays
-- **Backpressure Handling:** Prevention of system overload during peak processing
+`pom.xml` also declares the Java 8 compiler target, but its `exec.mainClass` points to an absent packaged class. The verified entry point is the default-package `SwiftCartMain` shown above.
 
-#### 4. Failure Handling
-- **Probabilistic Rejection:** Quality control simulation at each stage
-- **AGV Breakdowns:** Random equipment failures with automatic recovery
-- **Daemon Thread Recovery:** Non-blocking repair operations
+To reproduce the bounded evidence without changing source or constants, use Python 3.10+:
 
-#### 5. Thread Safety Mechanisms
-- Atomic counters for race-free statistics tracking
-- Synchronized collections for data aggregation
-- Defensive initialization and state validation
+```powershell
+python -B scripts/smoke.py
+```
 
-## System Assumptions
+The helper compiles into a temporary directory, runs the real entry point for 45 seconds, then terminates that observation run. It retains a compact selection of actual log lines and counts matching events. These are observations of a partial random run, not end-to-end correctness tests or throughput benchmarks. [Exact verification](docs/VERIFICATION.md).
 
-**Truck Operation Model:** The implementation assumes single-container-per-trip operation rather than accumulating multiple containers. This design prioritizes continuous material flow and reduces loading bay congestion, implementing a just-in-time delivery model for steady system throughput.
+## Limits of the model
 
-## Key Components
+The `LinkedBlockingQueue` instances have no explicit capacity; queue transfer alone does not enforce bounded backpressure. Shutdown waits for intake, then uses bounded drain waits and interruption, so a successful launch does not establish lossless completion or freedom from deadlock in every schedule.
 
-### Main Classes
+Final statistics contain assumptions: received orders are hard-coded to 600 in shutdown aggregation, and stage rejection counts are distributed from the total rather than collected independently. Keep these separate from direct event counts. Random seeds are not controlled, so different runs produce different outcomes.
 
-- **SwiftCartMain.java** - Application entry point and system orchestration
-- **SharedResources.java** - Centralized resource and queue management
-- **Statistics.java** - Thread-safe performance metrics tracking
-
-### Thread Classes
-
-- **OrderIntakeThread.java** - Order generation and validation
-- **PickingStationThread.java** - Inventory retrieval with worker pool
-- **PackingStationThread.java** - Single-threaded box creation
-- **LabellingStationThread.java** - Destination assignment and tracking
-- **SortingAreaThread.java** - Package routing to containers
-- **LoaderThread.java** - AGV operations for container movement
-- **TruckThread.java** - Container loading and transport
-
-### Entity Classes
-
-- **Order.java** - Immutable order representation
-- **Box.java** - Package entity with quality flags
-- **Container.java** - Capacity-enforced storage unit
-- **RejectedOrder.java** - Defective order tracking
-
-### Support Classes
-
-- **RejectHandler.java** - Background rejection processing
-- **AGVFailureSimulator.java** - Equipment breakdown simulation
-- **Constants.java** - System configuration parameters
-- **StringUtils.java** - Thread-safe utility methods
-
-## Safety Features
-
-### Concurrency Safety
-- **Atomic Operations:** Lock-free counter updates
-- **Synchronized Blocks:** Explicit synchronization for complex operations
-- **Try-Finally Blocks:** Guaranteed resource release
-- **Interrupt Handling:** Graceful thread termination
-
-### Resource Safety
-- **Capacity Enforcement:** Proactive size checking before operations
-- **Timeout Operations:** Non-blocking resource acquisition with deadlock prevention
-- **Semaphore Control:** Prevent resource oversubscription
-
-## Performance Monitoring
-
-The system tracks comprehensive statistics including:
-
-- Total orders processed and rejected (by stage)
-- Average processing times per stage
-- AGV breakdown frequency and downtime
-- Loading bay utilization
-- Container fill rates
-- Overall system throughput
-
-## Configuration
-
-Key configurable parameters (Constants.java):
-
-- **Processing Times:** Variable delays for each stage
-- **Resource Limits:** Number of pickers, AGVs, loading bays
-- **Capacity Constraints:** Queue sizes, container capacities
-- **Failure Rates:** Rejection probabilities, breakdown frequencies
-- **System Scale:** Number of orders, processing intervals
-
-## Learning Outcomes
-
-This project demonstrates mastery of:
-
-1. **Thread Lifecycle Management** - Creation, coordination, and graceful shutdown
-2. **Synchronization Mechanisms** - Locks, semaphores, atomic operations
-3. **Concurrent Data Structures** - BlockingQueue, synchronized collections
-4. **Resource Management** - Limited resource allocation and deadlock avoidance
-5. **Producer-Consumer Patterns** - Pipeline architectures with backpressure
-6. **Failure Handling** - Probabilistic modeling and automatic recovery
-7. **Performance Monitoring** - Thread-safe statistics in concurrent systems
-
-## Requirements Fulfilled
-
-### Basic Requirements ✓
-- Multi-stage order processing pipeline
-- Concurrent worker threads with resource limits
-- Thread-safe data transfer between stages
-- Proper state validation and quality control
-
-### Additional Requirements ✓
-- Defective order handling with rejection tracking
-- Capacity constraints with overflow prevention
-- Autonomous loader simulation with failures
-- Concurrent activity coordination
-- Comprehensive statistics reporting
-
-## Technical Highlights
-
-- **Scalable Architecture:** Easy to adjust resource counts and processing parameters
-- **Realistic Simulation:** Probabilistic delays and failures mimic real-world operations
-- **Debug Support:** Thread naming for clear identification in logs
-- **Clean Separation:** Well-defined interfaces between processing stages
-- **Robust Error Handling:** Interrupt-aware processing with proper cleanup
-
----
-
-*This project represents a comprehensive implementation of concurrent programming principles applied to a real-world warehouse automation scenario, demonstrating both theoretical understanding and practical application of multi-threaded Java programming.*
+The [detailed guide](docs/PROJECT_GUIDE.md) describes the components and learning goals, with corrections noted at its start. No automated test suite or standalone license file is present; no production readiness or industrial performance claim is made.
