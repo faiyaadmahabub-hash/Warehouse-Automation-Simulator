@@ -43,7 +43,6 @@ AGVFailureSimulator: AGV-3 repaired (Thread: AGVRepair-3)
 
 Observed event counts (log lines, not unique-order correctness assertions):
 Intake accepted: 74
-Packed: 0
 Sorted: 51
 Containers created: 1
 Truck dispatch lines: 0

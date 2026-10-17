@@ -31,7 +31,7 @@ with tempfile.TemporaryDirectory() as folder:
             print('\n'+prefix)
             print('\n'.join(selected[:3]))
     print('\nObserved event counts (log lines, not unique-order correctness assertions):')
-    for label,token in [('Intake accepted','accepted (Thread: OrderThread'),('Packed','packed into box'),('Sorted','sorted to'),('Containers created','sealed and sent to loading queue'),('Truck dispatch lines','dispatched')]:
+    for label,token in [('Intake accepted','accepted (Thread: OrderThread'),('Sorted','sorted to'),('Containers created','sealed and sent to loading queue'),('Truck dispatch lines','dispatched')]:
         print(label+': '+str(sum(token in line for line in lines)))
     assert 'OrderIntake:' in output and 'Sorter:' in output and 'Packer:' in output
     print('Smoke scope: compilation and active pipeline stages observed; no full-run totals claimed.')

@@ -2,8 +2,8 @@
 
 > Preserved original coursework guide. Source inspection and a fresh partial run on 17 October 2026 are documented in [VERIFICATION.md](VERIFICATION.md). Corrections: the inter-stage `LinkedBlockingQueue` instances are unbounded, `SortingThread.java` is the actual sorter filename, and final per-stage rejection totals are calculated from aggregate counts rather than independently measured. The 45-second smoke run does not establish five-minute completion, all statistics, or universal deadlock freedom. The Maven `exec.mainClass` setting is stale; use `SwiftCartMain`.
 
-**Author:** Faiyad Mahabub (TP077983)  
-**Course:** CT074-3-2-CCP - Concurrent Programming  
+**Author:** Faiyad Mahabub (TP077983)
+**Course:** CT074-3-2-CCP - Concurrent Programming
 **Lecturer:** DR. KUAN YIK JUNN
 
 ## Overview
